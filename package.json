@@ -1,10 +1,13 @@
 {
-  "name": "node-webvtt",
+  "name": "@voctrolabs/node-webvtt",
   "version": "1.0.3",
   "description": "WebVTT parser and segmenter with HLS support",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
-    "test": "./node_modules/eslint/bin/eslint.js ./ && ./node_modules/mocha/bin/mocha -R dot"
+    "build": "BABEL_ENV=production babel src --out-dir lib --source-maps",
+    "lint": "./node_modules/eslint/bin/eslint.js ./src ./bin",
+    "prepare": "npm run-script build",
+    "test": "npm run-script lint && ./node_modules/mocha/bin/mocha -R dot"
   },
   "keywords": [
     "webvtt",
@@ -22,6 +25,8 @@
   "author": "Ólafur Sverrir Kjartansson <kjarni@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
     "chai": "^3.4.1",
     "eslint": "^1.10.3",
     "mocha": "^2.3.4"
