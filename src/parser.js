@@ -1,14 +1,14 @@
 'use strict';
 
-function ParserError (message, error) {
+function ParserError(message, error) {
   this.message = message;
   this.error = error;
 }
 ParserError.prototype = Object.create(Error.prototype);
 
-const TIMESTAMP_REGEXP = /([0-9]{1,2})?:?([0-9]{2}):([0-9]{2}\.[0-9]{3})/;
+var TIMESTAMP_REGEXP = /([0-9]{1,2})?:?([0-9]{2}):([0-9]{2}[\.\,][0-9]{3})/;
 
-function parse (input) {
+function parse(input) {
 
   if (typeof input !== 'string') {
     throw new ParserError('Input must be a string');
@@ -17,15 +17,15 @@ function parse (input) {
   input = input.replace(/\r\n/g, '\n');
   input = input.replace(/\r/g, '\n');
 
-  const parts = input.split('\n\n');
+  var parts = input.split('\n\n');
 
-  const header = parts.shift();
+  var header = parts.shift();
 
   if (!header.startsWith('WEBVTT')) {
     throw new ParserError('Must start with "WEBVTT"');
   }
 
-  const headerParts = header.split('\n');
+  var headerParts = header.split('\n');
 
   // nothing of interests, return early
   if (parts.length === 0 && headerParts.length === 1) {
@@ -36,32 +36,31 @@ function parse (input) {
     throw new ParserError('No blank line after signature');
   }
 
-  const cues = parseCues(parts);
+  var cues = parseCues(parts);
 
-  return { valid: true, cues };
+  return { valid: true, cues: cues };
 }
 
-function parseCues (cues) {
+function parseCues(cues) {
   return cues.map(parseCue);
 }
 
-function parseCue (cue, i) {
-  let identifier = '';
-  let start = 0;
-  let end = 0;
-  let text = '';
-  let styles = '';
+function parseCue(cue, i) {
+  var identifier = '';
+  var start = 0;
+  var end = 0;
+  var text = '';
+  var styles = '';
 
   // split and remove empty lines
-  const lines = cue.split('\n').filter(Boolean);
+  var lines = cue.split('\n').filter(Boolean);
 
   if (lines.length === 1 && !lines[0].includes('-->')) {
-    throw new ParserError(`Cue identifier cannot be standalone (cue #${i})`);
+    throw new ParserError('Cue identifier cannot be standalone (cue #' + i + ')');
   }
 
-  if (lines.length > 1 &&
-      !(lines[0].includes('-->') || lines[1].includes('-->'))) {
-    const msg = `Cue identifier needs to be followed by timestamp (cue #${i})`;
+  if (lines.length > 1 && !(lines[0].includes('-->') || lines[1].includes('-->'))) {
+    var msg = 'Cue identifier needs to be followed by timestamp (cue #' + i + ')';
     throw new ParserError(msg);
   }
 
@@ -70,23 +69,21 @@ function parseCue (cue, i) {
   }
 
   if (lines.length > 0 && lines[0].includes('-->')) {
-    const times = lines[0].split(' --> ');
+    var times = lines[0].split(' --> ');
 
-    if (times.length !== 2 ||
-        !validTimestamp(times[0]) ||
-        !validTimestamp(times[1])) {
-      throw new ParserError(`Invalid cue timestamp (cue #${i})`);
+    if (times.length !== 2 || !validTimestamp(times[0]) || !validTimestamp(times[1])) {
+      throw new ParserError('Invalid cue timestamp (cue #' + i + ')');
     }
 
     start = parseTimestamp(times[0]);
     end = parseTimestamp(times[1]);
 
     if (start > end) {
-      throw new ParserError(`Start timestamp greater than end (cue #${i})`);
+      throw new ParserError('Start timestamp greater than end (cue #' + i + ')');
     }
 
     if (end <= start) {
-      throw new ParserError(`End must be greater than start (cue #${i})`);
+      throw new ParserError('End must be greater than start (cue #' + i + ')');
     }
 
     // TODO better style validation
@@ -97,20 +94,21 @@ function parseCue (cue, i) {
 
   text = lines.join('\n');
 
-  return { identifier, start, end, text, styles };
+  return { identifier: identifier, start: start, end: end, text: text, styles: styles };
 }
 
-function validTimestamp (timestamp) {
+function validTimestamp(timestamp) {
   return TIMESTAMP_REGEXP.test(timestamp);
 }
 
-function parseTimestamp (timestamp) {
-  const matches = timestamp.match(TIMESTAMP_REGEXP);
+function parseTimestamp(timestamp) {
+  var matches = timestamp.match(TIMESTAMP_REGEXP);
 
-  let secs = parseFloat(matches[3]);
+  var secs = parseFloat(matches[3].replace(',', '.')); // in case , is used as decimal separator
   secs += parseFloat(matches[2]) * 60; // mins
   secs += parseFloat(matches[1] || 0) * 60 * 60; // hours
   return secs;
 }
 
-module.exports = { ParserError, parse };
+module.exports = { ParserError: ParserError, parse: parse };
+//# sourceMappingURL=parser.js.map
